@@ -7,6 +7,7 @@ import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.util.glsl.ShaderCode;
 
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 public class GLEventHandler implements GLEventListener {
 
@@ -21,6 +22,8 @@ public class GLEventHandler implements GLEventListener {
     private int programID;
 
     private int vertexBufferId;
+
+    private int elementBufferId;
 
     @Override
     public void init(GLAutoDrawable drawable) {
@@ -45,12 +48,15 @@ public class GLEventHandler implements GLEventListener {
         checkLinkStatus(programID);
 
         var positions = FloatBuffer.wrap(new float[]{0f,1f,0f,1f,-0.5f,0f,-1f,-0.5f,0f});
-        var vertexBufferIds = new int[]{0};
-        gl.glGenBuffers(1,vertexBufferIds,0);
-        vertexBufferId = vertexBufferIds[0];
+        var elements = IntBuffer.wrap(new int[]{0,1,2});
+        var buffers = new int[]{0,0};
+        gl.glGenBuffers(2,buffers,0);
+        vertexBufferId = buffers[0];
+        elementBufferId = buffers[1];
         gl.glBindBuffer(GL4.GL_ARRAY_BUFFER,vertexBufferId);
         gl.glBufferData(GL4.GL_ARRAY_BUFFER, 4 * 9,positions,GL4.GL_STATIC_DRAW);
-
+        gl.glBindBuffer(GL4.GL_ELEMENT_ARRAY_BUFFER,elementBufferId);
+        gl.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER,4*3,elements,GL4.GL_STATIC_DRAW);
         gl.glEnableVertexAttribArray(0);
     }
 
