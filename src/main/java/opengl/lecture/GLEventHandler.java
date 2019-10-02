@@ -27,6 +27,8 @@ public class GLEventHandler implements GLEventListener {
 
     private float currentTime;
 
+    private int polygonCount = 0;
+
     @Override
     public void init(GLAutoDrawable drawable) {
         gl = drawable.getGL().getGL4();
@@ -49,17 +51,25 @@ public class GLEventHandler implements GLEventListener {
         gl.glLinkProgram(programID);
         checkLinkStatus(programID);
 
-        var positions = FloatBuffer.wrap(new float[]{0f,1f,0f,1f,-0.5f,0f,-1f,-0.5f,0f});
+
+        var objFile = resourceLoader.readText("Suzanne.obj");
+        var objParser = new ObjParser();
+        objParser.load(objFile);
+        var objPos = objParser.getPolygonArray();
+        var positions = FloatBuffer.wrap(objPos);
         var elements = IntBuffer.wrap(new int[]{0,1,2});
         var buffers = new int[]{0,0};
         gl.glGenBuffers(2,buffers,0);
         vertexBufferId = buffers[0];
         elementBufferId = buffers[1];
         gl.glBindBuffer(GL4.GL_ARRAY_BUFFER,vertexBufferId);
-        gl.glBufferData(GL4.GL_ARRAY_BUFFER, 4 * 9,positions,GL4.GL_STATIC_DRAW);
-        gl.glBindBuffer(GL4.GL_ELEMENT_ARRAY_BUFFER,elementBufferId);
-        gl.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER,4*3,elements,GL4.GL_STATIC_DRAW);
+        gl.glBufferData(GL4.GL_ARRAY_BUFFER, 4 * objPos.length,positions,GL4.GL_STATIC_DRAW);
+//        gl.glBindBuffer(GL4.GL_ELEMENT_ARRAY_BUFFER,elementBufferId);
+//        gl.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER,4*3,elements,GL4.GL_STATIC_DRAW);
         gl.glEnableVertexAttribArray(0);
+        gl.glEnableVertexAttribArray(1);
+        gl.glEnableVertexAttribArray(2);
+        polygonCount = objPos.length/8;
     }
 
     @Override
@@ -75,8 +85,10 @@ public class GLEventHandler implements GLEventListener {
 
         gl.glUseProgram(programID);
         gl.glUniform1f(gl.glGetUniformLocation(programID,"time"),currentTime);
-        gl.glVertexAttribPointer(0,3,GL4.GL_FLOAT,false,12,0);
-        gl.glDrawArrays(GL4.GL_TRIANGLES,0,3);
+        gl.glVertexAttribPointer(0,3,GL4.GL_FLOAT,false,32,0);
+        gl.glVertexAttribPointer(1,2,GL4.GL_FLOAT,false,32,12);
+        gl.glVertexAttribPointer(2,3,GL4.GL_FLOAT,false,32,20);
+        gl.glDrawArrays(GL4.GL_TRIANGLES,0,polygonCount);
     }
 
     @Override

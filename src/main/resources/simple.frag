@@ -4,6 +4,10 @@ layout(location = 0)out vec4 color;
 
 uniform float time;
 
+in vec3 normal;
+in vec2 texcoord;
+in vec3 position;
+
 void main() {
-    color = vec4(1.0, sin(time), 0.0, 1.0);
+    color = vec4(abs(normal), 1.0);
 }
