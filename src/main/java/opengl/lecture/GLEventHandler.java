@@ -25,6 +25,8 @@ public class GLEventHandler implements GLEventListener {
 
     private int elementBufferId;
 
+    private float currentTime;
+
     @Override
     public void init(GLAutoDrawable drawable) {
         gl = drawable.getGL().getGL4();
@@ -67,10 +69,12 @@ public class GLEventHandler implements GLEventListener {
 
     @Override
     public void display(GLAutoDrawable drawable) {
+        currentTime = (System.currentTimeMillis() % 100000000L) / 1000f;
         this.gl.glClearColor(0f,1f,0f,1f);
         this.gl.glClear(GL4.GL_COLOR_BUFFER_BIT);
 
         gl.glUseProgram(programID);
+        gl.glUniform1f(gl.glGetUniformLocation(programID,"time"),currentTime);
         gl.glVertexAttribPointer(0,3,GL4.GL_FLOAT,false,12,0);
         gl.glDrawArrays(GL4.GL_TRIANGLES,0,3);
     }
