@@ -8,6 +8,9 @@ import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.math.Matrix4;
 import com.jogamp.opengl.util.glsl.ShaderCode;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
@@ -34,6 +37,8 @@ public class GLEventHandler implements GLEventListener {
     private Matrix4 projection = new Matrix4();
 
     private Matrix4 view = new Matrix4();
+
+    private int textureIndex;
 
     @Override
     public void init(GLAutoDrawable drawable) {
@@ -63,7 +68,6 @@ public class GLEventHandler implements GLEventListener {
         objParser.load(objFile);
         var objPos = objParser.getPolygonArray();
         var positions = FloatBuffer.wrap(objPos);
-        var elements = IntBuffer.wrap(new int[]{0,1,2});
         var buffers = new int[]{0,0};
         gl.glGenBuffers(2,buffers,0);
         vertexBufferId = buffers[0];
@@ -81,7 +85,33 @@ public class GLEventHandler implements GLEventListener {
         view.loadIdentity();
         view.translate(0f,0f,3f);
         view.invert();
+
         gl.glEnable(GL4.GL_DEPTH_TEST);
+
+        var textures = new int[]{0};
+        gl.glGenTextures(1,textures,0);
+        textureIndex = textures[0];
+        try {
+            var image = ImageIO.read(resourceLoader.getStream("./debug.png"));
+            int[] pixels = new int[image.getWidth()*image.getHeight()];
+            image.getRGB(0,0,image.getWidth(),image.getHeight(),pixels,0,image.getWidth());
+            byte[] bytePixels = new byte[image.getWidth()*image.getHeight()*4];
+            for(int j=0,count=0; j<pixels.length; j++){
+                bytePixels[count++] = (byte)((pixels[j] >> (8*2)) & 0xFF);
+                bytePixels[count++] = (byte)((pixels[j] >> (8*1)) & 0xFF);
+                bytePixels[count++] = (byte)((pixels[j] >> (8*0)) & 0xFF);
+                bytePixels[count++] = (byte)128;
+            }
+            ByteBuffer textureBuffer = ByteBuffer.wrap(bytePixels);
+            gl.glBindTexture(GL4.GL_TEXTURE_2D,textureIndex);
+            gl.glTexImage2D(GL4.GL_TEXTURE_2D,0,GL4.GL_RGBA,image.getWidth(),image.getHeight(),0,GL4.GL_RGBA,GL4.GL_BYTE,textureBuffer);
+            gl.glTexParameteri(GL4.GL_TEXTURE_2D,GL4.GL_TEXTURE_MAG_FILTER,GL4.GL_NEAREST);
+            gl.glTexParameteri(GL4.GL_TEXTURE_2D,GL4.GL_TEXTURE_MIN_FILTER,GL4.GL_NEAREST);
+            gl.glTexParameteri(GL4.GL_TEXTURE_2D,GL4.GL_TEXTURE_WRAP_S,GL4.GL_CLAMP_TO_EDGE);
+            gl.glTexParameteri(GL4.GL_TEXTURE_2D,GL4.GL_TEXTURE_WRAP_T,GL4.GL_CLAMP_TO_EDGE);
+        }catch(Exception e){
+
+        }
     }
 
     @Override
@@ -102,6 +132,9 @@ public class GLEventHandler implements GLEventListener {
         gl.glVertexAttribPointer(0,3,GL4.GL_FLOAT,false,32,0);
         gl.glVertexAttribPointer(1,2,GL4.GL_FLOAT,false,32,12);
         gl.glVertexAttribPointer(2,3,GL4.GL_FLOAT,false,32,20);
+        gl.glActiveTexture(GL4.GL_TEXTURE0);
+        gl.glBindTexture(GL4.GL_TEXTURE_2D,textureIndex);
+        gl.glUniform1f(gl.glGetUniformLocation(programID,"tex"),0);
         gl.glDrawArrays(GL4.GL_TRIANGLES,0,polygonCount);
         view.loadIdentity();
         view.translate(0f,0f,3f);
