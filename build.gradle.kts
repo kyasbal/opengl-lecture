@@ -50,6 +50,9 @@ dependencies {
     runtime("org.jogamp.jogl:jogl-all:2.3.1:natives-solaris-i586")
     runtime("org.jogamp.jogl:jogl-all:2.3.1:natives-windows-amd64")
     runtime("org.jogamp.jogl:jogl-all:2.3.1:natives-windows-i586")
+
+    // JME3(Math用)
+    compile("org.jmonkeyengine:jme3-core:+")
 }
 
 application {

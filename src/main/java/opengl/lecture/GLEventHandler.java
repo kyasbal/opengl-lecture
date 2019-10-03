@@ -1,9 +1,11 @@
 package opengl.lecture;
 
+import com.jme3.math.MathUtils;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL4;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.math.Matrix4;
 import com.jogamp.opengl.util.glsl.ShaderCode;
 
 import java.nio.FloatBuffer;
@@ -28,6 +30,10 @@ public class GLEventHandler implements GLEventListener {
     private float currentTime;
 
     private int polygonCount = 0;
+
+    private Matrix4 projection = new Matrix4();
+
+    private Matrix4 view = new Matrix4();
 
     @Override
     public void init(GLAutoDrawable drawable) {
@@ -70,6 +76,12 @@ public class GLEventHandler implements GLEventListener {
         gl.glEnableVertexAttribArray(1);
         gl.glEnableVertexAttribArray(2);
         polygonCount = objPos.length/8;
+
+        projection.makePerspective(Mathf.PI/2f,1f,0.1f,100f);
+        view.loadIdentity();
+        view.translate(0f,0f,3f);
+        view.invert();
+        gl.glEnable(GL4.GL_DEPTH_TEST);
     }
 
     @Override
@@ -81,14 +93,20 @@ public class GLEventHandler implements GLEventListener {
     public void display(GLAutoDrawable drawable) {
         currentTime = (System.currentTimeMillis() % 100000000L) / 1000f;
         this.gl.glClearColor(0f,1f,0f,1f);
-        this.gl.glClear(GL4.GL_COLOR_BUFFER_BIT);
+        this.gl.glClear(GL4.GL_COLOR_BUFFER_BIT | GL4.GL_DEPTH_BUFFER_BIT);
 
         gl.glUseProgram(programID);
         gl.glUniform1f(gl.glGetUniformLocation(programID,"time"),currentTime);
+        gl.glUniformMatrix4fv(gl.glGetUniformLocation(programID,"projection"),1,false,projection.getMatrix(),0);
+        gl.glUniformMatrix4fv(gl.glGetUniformLocation(programID,"view"),1,false,view.getMatrix(),0);
         gl.glVertexAttribPointer(0,3,GL4.GL_FLOAT,false,32,0);
         gl.glVertexAttribPointer(1,2,GL4.GL_FLOAT,false,32,12);
         gl.glVertexAttribPointer(2,3,GL4.GL_FLOAT,false,32,20);
         gl.glDrawArrays(GL4.GL_TRIANGLES,0,polygonCount);
+        view.loadIdentity();
+        view.translate(0f,0f,3f);
+        view.invert();
+        view.rotate(currentTime,0f,1f,0f);
     }
 
     @Override
